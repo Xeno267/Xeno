@@ -1,4 +1,3 @@
--- ===================== Sekai Hub | Full Universal Script =====================
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
@@ -59,21 +58,6 @@ MainTab:CreateSlider({
     Callback = function(value)
         walkSpeed = value
         updateWalkSpeed()
-    end
-})
-
--- JumpPower
-local jumpPower = 50
-local function updateJumpPower()
-    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then humanoid.JumpPower = jumpPower end
-end
-MainTab:CreateButton({
-    Name = "🚀JumpPower",
-    Callback = function()
-        jumpPower = (jumpPower==50) and 130 or 50
-        updateJumpPower()
-        notify("JumpPower", jumpPower==130 and "130 ON" or "50 OFF")
     end
 })
 
@@ -284,7 +268,6 @@ VisualsTab:CreateButton({
 -- ================= Respawn & Continuous Loop =================
 local function onCharacterAdded(char)
     updateWalkSpeed()
-    updateJumpPower()
     setupInfiniteJump()
     if flying then startFly() end
 end
@@ -297,7 +280,6 @@ spawn(function()
         local humanoid=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             if humanoid.WalkSpeed~=walkSpeed then humanoid.WalkSpeed=walkSpeed end
-            if humanoid.JumpPower~=jumpPower then humanoid.JumpPower=jumpPower end
         end
         if noclip then
             local char=player.Character
