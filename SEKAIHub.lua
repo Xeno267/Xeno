@@ -6,7 +6,6 @@ local PlaceID = game.PlaceId
 local JobID = game.JobId
 local player = Players.LocalPlayer
 
--- Target нэрс
 local Targets = {
 "Bisonte Giuppitere",
 "Los Matteos",
@@ -49,76 +48,138 @@ local Targets = {
 -- lowercase болгож бэлдэнэ
 local lowerTargets = {}
 for _,v in ipairs(Targets) do
-table.insert(lowerTargets, string.lower(v))
+    table.insert(lowerTargets, string.lower(v))
 end
 
 -- Workspace шалгах функц
 local function findTarget()
-for _,obj in ipairs(workspace:GetDescendants()) do
-if obj:IsA("Model") or obj:IsA("Folder") then
-local n = string.lower(obj.Name)
-for _,t in ipairs(lowerTargets) do
-if string.find(n, t, 1, true) then
-return obj.Name
-end
-end
-end
-end
-return nil
+    for _,obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") or obj:IsA("Folder") then
+            local n = string.lower(obj.Name)
+            for _,t in ipairs(lowerTargets) do
+                if string.find(n, t, 1, true) then
+                    return obj.Name
+                end
+            end
+        end
+    end
+    return nil
 end
 
 -- Servers татах
 local cursor = nil
 local function getServers()
-local url = "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
-if cursor then url = url.."&cursor="..cursor end
-local ok, data = pcall(function() return HttpService:JSONDecode(game:HttpGet(url)) end)
-if not ok then return {} end
-cursor = data.nextPageCursor
-local servers = {}
-for _,v in ipairs(data.data) do
-if v.playing < v.maxPlayers and v.id ~= JobID then
-table.insert(servers, v.id)
-end
-end
-return servers
+    local url = "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
+    if cursor then url = url.."&cursor="..cursor end
+    local ok, data = pcall(function() return HttpService:JSONDecode(game:HttpGet(url)) end)
+    if not ok then return {} end
+    cursor = data.nextPageCursor
+    local servers = {}
+    for _,v in ipairs(data.data) do
+        if v.playing < v.maxPlayers and v.id ~= JobID then
+            table.insert(servers, v.id)
+        end
+    end
+    return servers
 end
 
 -- GUI үүсгэнэ
 local screen = Instance.new("ScreenGui")
 screen.Parent = player:WaitForChild("PlayerGui")
 
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 120)
+frame.Position = UDim2.new(0.5, -110, 0.1, 0)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Parent = screen
+
+local uicorner = Instance.new("UICorner")
+uicorner.CornerRadius = UDim.new(0, 10)
+uicorner.Parent = frame
+
+local uistroke = Instance.new("UIStroke")
+uistroke.Color = Color3.fromRGB(0, 255, 255)
+uistroke.Thickness = 2
+uistroke.Parent = frame
+
 local btn = Instance.new("TextButton")
 btn.Size = UDim2.new(0,200,0,50)
-btn.Position = UDim2.new(0.5,-100,0.1,0)
+btn.Position = UDim2.new(0.5,-100,0.05,0)
+btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+btn.BorderSizePixel = 0
+btn.TextColor3 = Color3.fromRGB(0, 255, 255)
+btn.Font = Enum.Font.Code
+btn.TextSize = 20
 btn.Text = "Start Server Hop"
-btn.Parent = screen
+btn.Parent = frame
+
+-- Hover effect
+btn.MouseEnter:Connect(function()
+    btn.BackgroundColor3 = Color3.fromRGB(0,50,50)
+end)
+btn.MouseLeave:Connect(function()
+    btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+end)
+
+-- Pressed animation
+btn.MouseButton1Down:Connect(function()
+    btn.Position = btn.Position + UDim2.new(0,2,0,2)
+end)
+btn.MouseButton1Up:Connect(function()
+    btn.Position = btn.Position - UDim2.new(0,2,0,2)
+end)
 
 local status = Instance.new("TextLabel")
 status.Size = UDim2.new(0,200,0,30)
-status.Position = UDim2.new(0.5,-100,0.1,60)
+status.Position = UDim2.new(0.5,-100,0.65,0)
+status.BackgroundTransparency = 1
+status.TextColor3 = Color3.fromRGB(0,255,255)
+status.Font = Enum.Font.Code
+status.TextSize = 18
 status.Text = "Idle"
-status.Parent = screen
+status.Parent = frame
 
--- Button дээр дарсан үед ажиллана
-btn.MouseButton1Click:Connect(function()
-status.Text = "Searching..."
-while true do
-local found = findTarget()
-if found then
-status.Text = "✅ Found: "..found
-break
-else
-local servers = getServers()
-if #servers > 0 then
-status.Text = "➡️ Hopping..."
-TeleportService:TeleportToPlaceInstance(PlaceID, servers[math.random(1,#servers)], player)
-else
-status.Text = "No servers..."
+-- Glitch animation for status
+local function glitchText(base)
+    local chars = {"A","B","C","D","E","F","1","2","3","4","X","Y","Z","#","%","$"}
+    local text = ""
+    for i=1,#base do
+        if math.random() < 0.3 then
+            text = text..chars[math.random(1,#chars)]
+        else
+            text = text..base:sub(i,i)
+        end
+    end
+    return text
 end
-end
-task.wait(3)
-end
+
+spawn(function()
+    while true do
+        if status.Text:find("Searching") then
+            status.Text = glitchText("Searching...")
+        end
+        task.wait(0.15)
+    end
 end)
-Ene script iin ongiig gaming bolgo
 
+-- Button click
+btn.MouseButton1Click:Connect(function()
+    status.Text = "Searching"
+    while true do
+        local found = findTarget()
+        if found then
+            status.Text = "✅ Found: "..found
+            break
+        else
+            local servers = getServers()
+            if #servers > 0 then
+                status.Text = "➡️ Hopping..."
+                TeleportService:TeleportToPlaceInstance(PlaceID, servers[math.random(1,#servers)], player)
+            else
+                status.Text = "No servers..."
+            end
+        end
+        task.wait(3)
+    end
+end)
